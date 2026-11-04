@@ -1,0 +1,114 @@
+[
+  {
+    "id": "alpine-morning",
+    "name": "alpine_morning.jpg",
+    "date": "2025-09-22",
+    "dateSource": "Sample date",
+    "size": 120753,
+    "categories": [
+      "Travel"
+    ],
+    "labels": [],
+    "thumbnail": "assets/alpine-morning.jpg",
+    "path": "/Sample Photos/alpine-morning.jpg",
+    "credit": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "a-day-by-the-lake",
+    "name": "a_day_by_the_lake.jpg",
+    "date": "2025-09-18",
+    "dateSource": "Sample date",
+    "size": 115022,
+    "categories": [
+      "Travel"
+    ],
+    "labels": [],
+    "thumbnail": "assets/a-day-by-the-lake.jpg",
+    "path": "/Sample Photos/a-day-by-the-lake.jpg",
+    "credit": "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "little-everyday-moments",
+    "name": "little_everyday_moments.jpg",
+    "date": "2025-09-14",
+    "dateSource": "Sample date",
+    "size": 164524,
+    "categories": [
+      "People"
+    ],
+    "labels": [],
+    "thumbnail": "assets/little-everyday-moments.jpg",
+    "path": "/Sample Photos/little-everyday-moments.jpg",
+    "credit": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "weekend-table",
+    "name": "weekend_table.jpg",
+    "date": "2025-09-10",
+    "dateSource": "Sample date",
+    "size": 221617,
+    "categories": [
+      "Food"
+    ],
+    "labels": [],
+    "thumbnail": "assets/weekend-table.jpg",
+    "path": "/Sample Photos/weekend-table.jpg",
+    "credit": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "our-favorite-roommate",
+    "name": "our_favorite_roommate.jpg",
+    "date": "2025-09-08",
+    "dateSource": "Sample date",
+    "size": 81390,
+    "categories": [
+      "Animals"
+    ],
+    "labels": [],
+    "thumbnail": "assets/our-favorite-roommate.jpg",
+    "path": "/Sample Photos/our-favorite-roommate.jpg",
+    "credit": "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "the-scenic-route",
+    "name": "the_scenic_route.jpg",
+    "date": "2025-08-29",
+    "dateSource": "Sample date",
+    "size": 185131,
+    "categories": [
+      "Travel"
+    ],
+    "labels": [],
+    "thumbnail": "assets/the-scenic-route.jpg",
+    "path": "/Sample Photos/the-scenic-route.jpg",
+    "credit": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "under-a-thousand-stars",
+    "name": "under_a_thousand_stars.jpg",
+    "date": "2025-08-23",
+    "dateSource": "Sample date",
+    "size": 99142,
+    "categories": [
+      "Travel"
+    ],
+    "labels": [],
+    "thumbnail": "assets/under-a-thousand-stars.jpg",
+    "path": "/Sample Photos/under-a-thousand-stars.jpg",
+    "credit": "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "afternoon-in-the-city",
+    "name": "afternoon_in_the_city.jpg",
+    "date": "2025-08-20",
+    "dateSource": "Sample date",
+    "size": 104574,
+    "categories": [
+      "People"
+    ],
+    "labels": [],
+    "thumbnail": "assets/afternoon-in-the-city.jpg",
+    "path": "/Sample Photos/afternoon-in-the-city.jpg",
+    "credit": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"
+  }
+]

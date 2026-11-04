@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Frame — a little order for a lifetime of photos. A private, local-first photo organizer."><title>Frame — Your photos, beautifully in order</title><link rel="icon" href="assets/icon.svg"><link rel="stylesheet" href="style.css"><script src="app.js" defer></script></head>
+<body>
+<aside class="sidebar">
+<a class="brand" href="./" aria-label="Frame home"><span class="logo">▧</span> frame<span class="brand-dot">.</span></a>
+<div class="workspace-label">YOUR WORKSPACE</div>
+<button class="nav-item active" id="libraryNav"><span>▦</span> Photo library <span class="nav-count" id="navCount">0</span></button>
+<button class="nav-item" id="categoryNav"><span>◈</span> Categories</button>
+<button class="nav-item" id="movesNav"><span>↗</span> Organize folders</button>
+<div class="sidebar-divider"></div>
+<div class="workspace-label">MADE FOR YOUR MEMORIES</div>
+<p class="sidebar-copy">A little less searching.<br>A little more remembering.</p>
+<div class="privacy-card"><span class="privacy-icon">⌂</span><strong>Right where they belong.</strong><p>Your photos stay on your device. Your memories stay yours.</p><span class="privacy-status"><i></i> Local-first by design</span></div>
+<div class="sidebar-bottom">FRAME / PHOTO ORGANIZER <span>v1.0</span></div>
+</aside>
+<main>
+<header class="topbar"><span>Workspace <span class="crumb">/</span> <b>Photo library</b></span><div class="topbar-right"><span id="modeBadge" class="mode-badge">Connecting…</span><button class="icon-button" id="helpButton" aria-label="How Frame works">?</button><span class="avatar">M</span></div></header>
+<div class="content">
+<section class="page-heading"><div><div class="eyebrow">A HOME FOR EVERY MOMENT</div><h1>Your photos, beautifully in order<span>.</span></h1><p>Find the moments you love. Make room for what comes next.</p></div><button id="demoButton" class="button secondary">Explore demo <span>↗</span></button></section>
+<section class="import-panel"><div class="import-icon">▧</div><div class="import-copy"><h2>Start with a folder. We’ll find the moments.</h2><p id="importHint">Choose a folder on your Mac or a connected drive. Nothing is moved.</p></div><form id="scanForm"><label class="sr-only" for="folderPath">Folder path</label><input id="folderPath" autocomplete="off" placeholder="/Volumes/My Drive/Photos" required><button class="button primary" id="scanButton" type="submit">Scan folder <span>→</span></button></form></section>
+<div id="scanStatus" class="scan-status" hidden role="status"></div>
+<div class="section-title"><div><h2>A place for everything <span id="categoryTotal"></span></h2><p>Suggested by what’s in your photos. Always yours to change.</p></div><button class="text-button" id="newCategory">＋ Create category</button></div>
+<section id="categoryCards" class="category-cards" aria-label="Photo categories"></section>
+<section class="library-section"><div class="library-heading"><h2 id="libraryTitle">All photos <span id="photoCount">0</span></h2><div class="library-tools"><button class="text-button" id="selectVisible">Select visible</button><button class="button primary small" id="reviewButton" disabled>Review moves <span>↗</span></button></div></div>
+<div class="filters"><div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="Search names, categories, or visual labels…" aria-label="Search photos"></div><div class="date-group"><label for="fromDate">From</label><input id="fromDate" type="date" aria-label="Start date"><label for="toDate">to</label><input id="toDate" type="date" aria-label="End date"></div><select id="sort" aria-label="Sort photos"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="name">Name A–Z</option></select><button class="text-button" id="clearFilters">Reset</button></div>
+<div id="selectionBar" class="selection-bar" hidden><strong id="selectionText"></strong><button class="text-button" id="assignCategory">Add to category</button><button class="text-button" id="replaceCategory">Change categories</button><button class="text-button" id="clearSelection">Clear selection</button></div>
+<div id="photoGrid" class="photo-grid"></div><div id="emptyState" class="empty-state"><div>▧</div><h3>Your memories start here</h3><p>Scan a photo folder, or explore the sample library to see Frame in action.</p><button class="button secondary" id="emptyDemo">Explore sample library →</button></div>
+<button id="loadMore" class="button secondary load-more" hidden>Show more photos</button>
+<div class="library-footer"><span id="resultCount">No photos yet</span><span><i></i> Visual organization first. Originals stay put.</span></div></section>
+<footer class="page-footer"><span>Less clutter. More memories.</span><span>Thoughtfully organized with <b>frame.</b></span></footer>
+</div></main>
+<dialog id="modal"><div class="modal-heading"><h2 id="modalTitle"></h2><button class="icon-button" id="closeModal" aria-label="Close dialog">×</button></div><div id="modalBody"></div><div class="modal-actions" id="modalActions"></div></dialog>
+<div id="toast" role="status" hidden></div>
+</body></html>
