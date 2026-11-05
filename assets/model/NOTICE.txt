@@ -1,0 +1,1 @@
+TensorFlow.js COCO-SSD, Apache License 2.0. Model: ssdlite_mobilenet_v2. Source: https://github.com/tensorflow/tfjs-models/tree/master/coco-ssd and https://storage.googleapis.com/tfjs-models/savedmodel/ssdlite_mobilenet_v2/
