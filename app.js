@@ -4,6 +4,8 @@ const baseCategories = ['People', 'Travel', 'Documents', 'Screenshots', 'Food', 
 const icons = {People:'♙', Travel:'△', Documents:'▤', Screenshots:'▣', Food:'♧', Animals:'♘', Duplicates:'▣', 'Similar shots':'◫', Other:'▧'};
 let mode = 'demo', token = '', items = [], custom = [], active = 'All photos', selected = new Set(), limit = 48, scanTimer, busy = false;
 let demoItems;
+let browserUrls = [];
+function releaseBrowserUrls(){browserUrls.forEach(url=>URL.revokeObjectURL(url));browserUrls=[];}
 let duplicateIds = new Set(), duplicatesChecked = false, catalogRoot = "", similarPairs = [], similarIds = new Set();
 const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const fmtDate = date => new Date(date + 'T12:00:00').toLocaleDateString(undefined, {month:'short',day:'numeric',year:'numeric'});
@@ -22,15 +24,18 @@ function visibleItems() {
     .sort((a,b) => $('sort').value === 'name' ? a.name.localeCompare(b.name) : $('sort').value === 'old' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
 }
 function render() {
-  $('modeBadge').textContent = mode === 'local' ? '● On your device' : '◈ Portfolio demo';
+  $('modeBadge').textContent = mode === 'local' ? '● On your device' : mode === 'browser' ? '● Browser library' : '◈ Portfolio demo';
   $('navCount').textContent = items.length;
-  $('demoButton').textContent = mode === 'local' ? 'Explore demo ↗' : 'About this demo ↗';
+  $('demoButton').textContent = mode === 'local' ? 'Explore demo ↗' : mode === 'browser' ? 'Open sample demo ↗' : 'About this demo ↗';
+  $('folderPath').hidden = mode !== 'local';
   $('folderPath').disabled = mode !== 'local';
   $('scanButton').textContent = mode === 'local' ? (busy ? 'Scanning…' : 'Scan folder →') : 'Local app required';
+  $('scanButton').hidden = mode !== 'local';
   $('scanButton').disabled = mode !== 'local' || busy;
-  $('chooseFolder').hidden = mode !== 'local';
+  $('chooseFolder').hidden = false;
+  $('chooseFolder').textContent = mode === 'local' ? 'Choose folder…' : 'Choose photo folder…';
   $('chooseFolder').disabled = busy;
-  $('importHint').textContent = mode === 'local' ? 'Choose a folder on your Mac or a connected drive. Nothing is moved.' : 'Sample library · Run Frame locally to scan your drives. Photos never need to be uploaded.';
+  $('importHint').textContent = mode === 'local' ? 'Choose a folder on your Mac or a connected drive. Nothing is moved.' : mode === 'browser' ? 'Your folder stays in this browser. Categories are manual; dates use file modification time.' : 'Try the samples or choose a folder. Photos stay on your device; browser categories are manual.';
   $('categoryTotal').textContent = categories().length;
   $('categoryCards').innerHTML = categories().map(name => `<button class="category-card ${active === name ? 'active' : ''}" data-category="${escapeHTML(name)}" aria-pressed="${active === name}"><span class="cat-icon">${icons[name] || '◇'}</span><span class="cat-arrow">↗</span><span class="cat-name">${escapeHTML(name)}</span><span class="cat-count">${name === 'Duplicates' ? (duplicatesChecked ? duplicateIds.size + ' photos' : 'Run duplicate check') : name === 'Similar shots' ? similarIds.size + ' photos' : items.filter(item=>item.categories.includes(name)).length + ' photos'}</span></button>`).join('');
   $('categoryCards').querySelectorAll('button').forEach(button => button.onclick = () => {if (button.dataset.category === 'Similar shots') { showSimilar(); return; } if (button.dataset.category === 'Duplicates' && !duplicatesChecked) { $('duplicatesNav').click(); return; } active = active === button.dataset.category ? 'All photos' : button.dataset.category; limit=48; render();});
@@ -49,7 +54,8 @@ function render() {
   $('resultCount').textContent = `Showing ${Math.min(limit,visible.length)} of ${visible.length} photos${mode==='demo' ? ' · Sample images' : ''}`;
   $('selectionBar').hidden = !selected.size;
   $('selectionText').textContent = selected.size + ' selected';
-  $('reviewButton').disabled = !selected.size || busy;
+  $('reviewButton').disabled = !selected.size || busy || mode === 'browser';
+  $('reviewDeletion').hidden = mode === 'browser';
   $('newCategory').disabled = busy;
 }
 function modal(title, html, buttons = []) {
@@ -69,10 +75,10 @@ function showPhoto(item) {
   modal(item.name, `<img class="detail-image" src="${escapeHTML(item.thumbnail)}" alt="${escapeHTML(item.name)}"><p>${escapeHTML(item.categories.join(' · '))}</p><p>${escapeHTML(item.dateSource || 'Date taken')}: ${fmtDate(item.date)} · ${size(item.size)}</p><p class="detail-path">${escapeHTML(item.path || 'Portfolio sample')}</p><p class="note">Categories are suggestions, not certainty. Select photos to add or change categories.</p>`, [{label:selected.has(item.id)?'Deselect photo':'Select photo', primary:true, action:()=>{selected.has(item.id)?selected.delete(item.id):selected.add(item.id);render();close();}}]);
 }
 function help() {
-  modal('A little order. A lot of memories.', `<p>Frame groups photos visually before anything changes on disk.</p><ol><li>Run the local app and enter a folder path, including a mounted external drive.</li><li>On-device image analysis suggests content categories. Filter by date taken (or file modification date when unavailable).</li><li>Create your own categories and tag selected photos. These are visual labels.</li><li>Select photos, choose <b>Review moves</b>, and check each destination before confirming.</li></ol><p class="note">Moving uses the same drive, under <b>Organized / category</b> in your scanned folder. No full photo copies, no overwrites, no uploads. Small previews and a catalog use some local storage. Suggestions can be wrong; review them.</p><p>The portfolio version uses sample images and simulates moves only. The local app currently requires macOS, Python 3, and Apple command-line tools.</p>`,[{label:'Got it',primary:true,action:close}]);
+  modal('A little order. A lot of memories.', `<p>Frame groups photos visually before anything changes on disk.</p><ol><li>Run the local app and enter a folder path, including a mounted external drive.</li><li>On-device image analysis suggests content categories. Filter by date taken (or file modification date when unavailable).</li><li>Create your own categories and tag selected photos. These are visual labels.</li><li>Select photos, choose <b>Review moves</b>, and check each destination before confirming.</li></ol><p class="note">Moving uses the same drive, under <b>Organized / category</b> in your scanned folder. No full photo copies, no overwrites, no uploads. Small previews and a catalog use some local storage. Suggestions can be wrong; review them.</p><p>On the live website, choose a folder to view supported photos locally, filter by modified date, and assign categories manually for this session. Automatic content grouping, similar-shot analysis, and moving files require the macOS local app.</p>`,[{label:'Got it',primary:true,action:close}]);
 }
 $('helpButton').onclick = help;
-$('demoButton').onclick = () => {if(mode==='local') window.open('?demo=1','_blank','noopener'); else help();};
+$('demoButton').onclick = () => {if(mode==='local') window.open('?demo=1','_blank','noopener'); else if(mode==='browser') {releaseBrowserUrls();mode='demo';selected.clear();active='All photos';loadDemo();} else help();};
 $('emptyDemo').onclick = () => {if(mode==='local') window.open('?demo=1','_blank','noopener'); else loadDemo();};
 $('libraryNav').onclick = () => {active='All photos';$('search').value='';$('fromDate').value='';$('toDate').value='';render();};
 $('categoryNav').onclick = () => $('categoryCards').scrollIntoView({behavior:'smooth',block:'center'});
@@ -126,7 +132,7 @@ function tagDialog(createOnly=false, replace=false) {
     if(!/^[\p{L}\p{N}_][\p{L}\p{N}_ .&()-]{0,59}$/u.test(name)||name!==name.trim()) throw new Error('Use 1–60 letters, numbers, spaces, or & ( ) - .');
     const ids=createOnly?[]:[...selected];
     if(mode==='local'){const result=await request('/api/tag',{ids,category:name,replace});items=result.items;custom=result.custom;}
-    else {if(!custom.includes(name))custom.push(name);items.forEach(item=>{if(ids.includes(item.id))item.categories=replace?[name]:[...new Set([...item.categories,name])];});persistDemo();}
+    else {if(!custom.includes(name))custom.push(name);items.forEach(item=>{if(ids.includes(item.id))item.categories=replace?[name]:[...new Set([...item.categories,name])];});if(mode==='demo')persistDemo();}
     render();close();notify(createOnly?'Category created. Select photos to add them.':'Categories saved. No files moved.');
   }}]);
 }
@@ -135,6 +141,7 @@ $('assignCategory').onclick = () => tagDialog();
 $('replaceCategory').onclick = () => tagDialog(false,true);
 async function reviewMoves(reviewDeletion=false) {
   if(!selected.size||busy) return;
+  if(mode==='browser') return notify('Moving files requires the local app.');
   modal(reviewDeletion?'Review folder for later deletion':'Give these moments a home', `<p>${selected.size} selected photos will have one physical destination, even if they have several visual categories.</p>${reviewDeletion?'<p class="note">Destination: Organized / Review for deletion. Files are not deleted; you can inspect the folder and decide what to do later.</p>':`<label for="moveCategory">Destination category</label><select id="moveCategory">${categories().filter(name=>!['Duplicates','Similar shots'].includes(name)).map(name=>`<option>${escapeHTML(name)}</option>`).join('')}</select>`}<p class="note">${mode==='demo'?'Demo only: no real files will be moved.':'Files will be moved within the same drive. Existing files are never overwritten.'}</p>${mode==='local'?'<label><input type="checkbox" id="allowCopy"> If a safe rename is unavailable, copy and verify one file at a time before removing its original. Needs free space; interrupted operations can leave a copy for review.</label>':''}`, [{label:'Cancel',action:close},{label:'Preview destinations →',primary:true,action:async()=>{
     const category=reviewDeletion?'Review for deletion':$('moveCategory').value;
     const allowCopy=mode==='local' && $('allowCopy').checked;
@@ -152,7 +159,23 @@ async function reviewMoves(reviewDeletion=false) {
 $('reviewButton').onclick = () => reviewMoves();
 $('reviewDeletion').onclick = () => reviewMoves(true);
 $('chooseFolder').onclick = async () => {
+  if(mode!=='local') { $('browserFolder').click(); return; }
   try {const {path}=await request('/api/choose-folder',{}); if(path){$('folderPath').value=path;$('scanButton').focus();}} catch(error){notify(error.message);}
+};
+$('browserFolder').onchange = event => {
+  const files = Array.from(event.target.files || []).filter(file => !file.name.startsWith('.') && /\.(jpe?g|png|gif|webp|avif|bmp)$/i.test(file.name));
+  if(!files.length) {notify('No supported browser images found. Try JPEG, PNG, GIF, WebP, AVIF, or BMP.'); return;}
+  releaseBrowserUrls(); selected.clear(); custom=[]; active='All photos'; limit=48;
+  duplicateIds.clear(); duplicatesChecked=false; similarIds.clear(); similarPairs=[];
+  mode='browser';
+  items=files.map((file,index)=>{
+    const thumbnail=URL.createObjectURL(file);browserUrls.push(thumbnail);
+    const date=new Date(file.lastModified), pad=n=>String(n).padStart(2,'0');
+    return {id:'browser-'+index,name:file.name,path:file.webkitRelativePath || file.name,
+      date:`${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`,
+      dateSource:'File modified',size:file.size,categories:['Other'],labels:[],thumbnail};
+  });
+  render();notify(`Opened ${items.length} photos locally. Add categories manually; files are not uploaded.`);
 };
 $('scanForm').onsubmit = async event => {
   event.preventDefault(); if(mode!=='local'||busy)return;
