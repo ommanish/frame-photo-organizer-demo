@@ -35,6 +35,8 @@ function render() {
   $('chooseFolder').hidden = false;
   $('chooseFolder').textContent = mode === 'local' ? 'Choose folder…' : 'Choose photo folder…';
   $('chooseFolder').disabled = busy;
+  $('compatFolder').hidden = mode === 'local';
+  $('compatFolder').disabled = busy;
   $('importHint').textContent = mode === 'local' ? 'Choose a folder on your Mac or a connected drive. Nothing is moved.' : mode === 'browser' ? 'Your folder stays in this browser. Photos are analyzed on your device. Content labels are suggestions; dates use file modification time.' : 'Choose a folder. Some browsers say “upload”; Frame processes the files on your device without sending your photos to a server.';
   $('categoryTotal').textContent = categories().length;
   $('categoryCards').innerHTML = categories().map(name => `<button class="category-card ${active === name ? 'active' : ''}" data-category="${escapeHTML(name)}" aria-pressed="${active === name}"><span class="cat-icon">${icons[name] || '◇'}</span><span class="cat-arrow">↗</span><span class="cat-name">${escapeHTML(name)}</span><span class="cat-count">${name === 'Duplicates' ? (duplicatesChecked ? duplicateIds.size + ' photos' : (mode==='browser' ? 'Checking…' : 'Run duplicate check')) : name === 'Similar shots' ? similarIds.size + ' photos' : items.filter(item=>item.categories.includes(name)).length + ' photos'}</span></button>`).join('');
@@ -163,13 +165,26 @@ $('reviewDeletion').onclick = () => reviewMoves(true);
 $('chooseFolder').onclick = async () => {
   if(mode!=='local') {
     if (typeof window.showDirectoryPicker === 'function' && !new URLSearchParams(location.search).has('compat')) {
-      try { const root=await window.showDirectoryPicker({mode:'read'}); const files=[]; await collectDirectory(root, files, root.name); openBrowserFiles(files); }
-      catch(error) {if(error.name!=='AbortError')notify('Could not open the folder: '+error.message);} return;
+      try {
+        const root=await window.showDirectoryPicker({mode:'read'});
+        busy=true; $('scanStatus').hidden=false; $('scanStatus').textContent='Reading the selected folder on this device…'; render();
+        const files=[]; await collectDirectory(root, files, root.name); busy=false; openBrowserFiles(files); render();
+      } catch(error) {
+        busy=false; render();
+        if(error.name!=='AbortError') { $('scanStatus').hidden=false; $('scanStatus').textContent='Could not read the folder. Try another folder picker or check the folder permissions.'; }
+      } return;
     }
-    $('browserFolder').click(); return;
+    openCompatibilityPicker(); return;
   }
   try {const {path}=await request('/api/choose-folder',{}); if(path){$('folderPath').value=path;$('scanButton').focus();}} catch(error){notify(error.message);}
 };
+function openCompatibilityPicker() {
+  $('browserFolder').value='';
+  $('scanStatus').hidden=false;
+  $('scanStatus').textContent='Choose a folder in the window that opens. If no window appears, try opening Frame directly in Chrome or Edge.';
+  $('browserFolder').click();
+}
+$('compatFolder').onclick = openCompatibilityPicker;
 async function collectDirectory(directory, result, prefix) {
   for await(const [name,handle] of directory.entries()) {
     if(name.startsWith('.')) continue;
@@ -232,7 +247,7 @@ async function analyzeBrowserFiles(run) {
 }
 function openBrowserFiles(entries) {
   const files=entries.filter(entry=>!entry.file.name.startsWith('.') && /\.(jpe?g|png|gif|webp|avif|bmp)$/i.test(entry.file.name));
-  if(!files.length) {notify('No supported browser images found. Try JPEG, PNG, GIF, WebP, AVIF, or BMP.');return;}
+  if(!files.length) {$('scanStatus').hidden=false;$('scanStatus').textContent='No supported images found. Try JPEG, PNG, GIF, WebP, AVIF, or BMP.';notify('No supported images found in this folder.');return;}
   const run=++browserRun;releaseBrowserUrls();browserFiles.clear();selected.clear();custom=[];active='All photos';limit=48;
   duplicateIds.clear();duplicatesChecked=false;similarIds.clear();similarPairs=[];browserGroups=[];mode='browser';busy=true;
   items=files.map(({file,path},index)=>{const thumbnail=URL.createObjectURL(file);browserUrls.push(thumbnail);const id='browser-'+index;browserFiles.set(id,file);
