@@ -1,5 +1,6 @@
 'use strict';
 const $ = id => document.getElementById(id);
+const publicDemo = !['127.0.0.1', 'localhost', '[::1]'].includes(location.hostname);
 const baseCategories = ['People', 'Travel', 'Documents', 'Screenshots', 'Food', 'Animals', 'Duplicates', 'Similar shots', 'Other'];
 const icons = {People:'♙', Travel:'△', Documents:'▤', Screenshots:'▣', Food:'♧', Animals:'♘', Duplicates:'▣', 'Similar shots':'◫', Other:'▧'};
 let mode = 'demo', token = '', items = [], custom = [], active = 'All photos', selected = new Set(), limit = 48, scanTimer, busy = false;
@@ -32,12 +33,12 @@ function render() {
   $('scanButton').textContent = mode === 'local' ? (busy ? 'Scanning…' : 'Scan folder →') : 'Local app required';
   $('scanButton').hidden = mode !== 'local';
   $('scanButton').disabled = mode !== 'local' || busy;
-  $('chooseFolder').hidden = false;
+  $('chooseFolder').hidden = publicDemo;
   $('chooseFolder').textContent = mode === 'local' ? 'Choose folder…' : 'Choose photo folder…';
   $('chooseFolder').disabled = busy;
-  $('compatFolder').hidden = mode === 'local';
+  $('compatFolder').hidden = publicDemo || mode === 'local';
   $('compatFolder').disabled = busy;
-  $('importHint').textContent = mode === 'local' ? 'Choose a folder on your Mac or a connected drive. Nothing is moved.' : mode === 'browser' ? 'Your folder stays in this browser. Photos are analyzed on your device. Content labels are suggestions; dates use file modification time.' : 'Choose a folder. Some browsers say “upload”; Frame processes the files on your device without sending your photos to a server.';
+  $('importHint').textContent = publicDemo ? 'Explore the sample photos here. To scan your own folders, use the local app on your Mac.' : mode === 'local' ? 'Choose a folder on your Mac or a connected drive. Nothing is moved.' : mode === 'browser' ? 'Your folder stays in this browser. Photos are analyzed on your device. Content labels are suggestions; dates use file modification time.' : 'Choose a folder. Some browsers say “upload”; Frame processes the files on your device without sending your photos to a server.';
   $('categoryTotal').textContent = categories().length;
   $('categoryCards').innerHTML = categories().map(name => `<button class="category-card ${active === name ? 'active' : ''}" data-category="${escapeHTML(name)}" aria-pressed="${active === name}"><span class="cat-icon">${icons[name] || '◇'}</span><span class="cat-arrow">↗</span><span class="cat-name">${escapeHTML(name)}</span><span class="cat-count">${name === 'Duplicates' ? (duplicatesChecked ? duplicateIds.size + ' photos' : (mode==='browser' ? 'Checking…' : 'Run duplicate check')) : name === 'Similar shots' ? similarIds.size + ' photos' : items.filter(item=>item.categories.includes(name)).length + ' photos'}</span></button>`).join('');
   $('categoryCards').querySelectorAll('button').forEach(button => button.onclick = () => {if (button.dataset.category === 'Similar shots') { showSimilar(); return; } if (button.dataset.category === 'Duplicates' && mode === 'browser' && duplicatesChecked) {showBrowserDuplicates(); return;} if (button.dataset.category === 'Duplicates' && !duplicatesChecked) { $('duplicatesNav').click(); return; } active = active === button.dataset.category ? 'All photos' : button.dataset.category; limit=48; render();});
@@ -77,7 +78,7 @@ function showPhoto(item) {
   modal(item.name, `<img class="detail-image" src="${escapeHTML(item.thumbnail)}" alt="${escapeHTML(item.name)}"><p>${escapeHTML(item.categories.join(' · '))}</p><p>${escapeHTML(item.dateSource || 'Date taken')}: ${fmtDate(item.date)} · ${size(item.size)}</p><p class="detail-path">${escapeHTML(item.path || 'Portfolio sample')}</p><p class="note">Categories are suggestions, not certainty. Select photos to add or change categories.</p>`, [{label:selected.has(item.id)?'Deselect photo':'Select photo', primary:true, action:()=>{selected.has(item.id)?selected.delete(item.id):selected.add(item.id);render();close();}}]);
 }
 function help() {
-  modal('A little order. A lot of memories.', `<p>Frame groups photos visually before anything changes on disk.</p><ol><li>Run the local app and enter a folder path, including a mounted external drive.</li><li>On-device image analysis suggests content categories. Filter by date taken (or file modification date when unavailable).</li><li>Create your own categories and tag selected photos. These are visual labels.</li><li>Select photos, choose <b>Review moves</b>, and check each destination before confirming.</li></ol><p class="note">Moving uses the same drive, under <b>Organized / category</b> in your scanned folder. No full photo copies, no overwrites, no uploads. Small previews and a catalog use some local storage. Suggestions can be wrong; review them.</p><p>On the live website, choose a folder to view supported photos locally, filter by modified date, and assign categories manually for this session. Exact duplicates and similar shots are checked locally in your browser. The lightweight model suggests People, Animals, Food and some Travel. Screenshots and Documents are suggested from filenames and may be incomplete. Moving files requires the macOS local app.</p>`,[{label:'Got it',primary:true,action:close}]);
+  modal('A little order. A lot of memories.', `<p>Frame groups photos visually before anything changes on disk.</p><ol><li>Run the local app and enter a folder path, including a mounted external drive.</li><li>On-device image analysis suggests content categories. Filter by date taken (or file modification date when unavailable).</li><li>Create your own categories and tag selected photos. These are visual labels.</li><li>Select photos, choose <b>Review moves</b>, and check each destination before confirming.</li></ol><p class="note">Moving uses the same drive, under <b>Organized / category</b> in your scanned folder. No full photo copies, no overwrites, no uploads. Small previews and a catalog use some local storage. Suggestions can be wrong; review them.</p><p>The public website uses sample photos only. To scan and organize your own photos, run the local app on your Mac.</p>`,[{label:'Got it',primary:true,action:close}]);
 }
 $('helpButton').onclick = help;
 $('demoButton').onclick = () => {if(mode==='local') window.open('?demo=1','_blank','noopener'); else if(mode==='browser') {browserRun++;busy=false;releaseBrowserUrls();browserFiles.clear();mode='demo';selected.clear();active='All photos';$('scanStatus').hidden=true;loadDemo();} else help();};
@@ -163,6 +164,7 @@ async function reviewMoves(reviewDeletion=false) {
 $('reviewButton').onclick = () => reviewMoves();
 $('reviewDeletion').onclick = () => reviewMoves(true);
 $('chooseFolder').onclick = async () => {
+  if(publicDemo) return;
   if(mode!=='local') {
     if (typeof window.showDirectoryPicker === 'function' && !new URLSearchParams(location.search).has('compat')) {
       try {
@@ -179,6 +181,7 @@ $('chooseFolder').onclick = async () => {
   try {const {path}=await request('/api/choose-folder',{}); if(path){$('folderPath').value=path;$('scanButton').focus();}} catch(error){notify(error.message);}
 };
 function openCompatibilityPicker() {
+  if(publicDemo) return;
   $('browserFolder').value='';
   $('scanStatus').hidden=false;
   $('scanStatus').textContent='Choose a folder in the window that opens. If no window appears, try opening Frame directly in Chrome or Edge.';
